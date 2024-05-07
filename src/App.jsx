@@ -6,7 +6,7 @@ import { PreSaleProvider } from "./context/PreSaleContext";
 import { createWeb3Modal, defaultConfig } from "@web3modal/ethers/react";
 
 // 1. Get projectId
-const projectId = "862e2544b694a246addaff50ba2ab87e";
+const projectId = "1a226919d8f77f70a259f209b22316fa";
 
 // 2. Set chains
 const mainnet = {

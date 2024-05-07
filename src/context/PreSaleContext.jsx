@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { preSales, paymentTypes } from "../data";
+import useContracts from "../hooks/useContracts";
+import { useWeb3ModalAccount } from "@web3modal/ethers/react";
 
 const PreSaleContext = createContext();
 
@@ -10,11 +12,20 @@ function PreSaleProvider({ children }) {
   const [selectedPreSale, setSelectedPreSale] = useState({});
   const [showPurchase, setShowPurchase] = useState(false);
 
+  const { address, isConnected } = useWeb3ModalAccount();
+  const { getLootBoxes, getPayAmount } = useContracts();
+
   useEffect(() => {
-    setPreSalesData(preSales);
+    const _getlootBoxes = async () => {
+      const lootBoxes = await getLootBoxes();
+      console.log(lootBoxes[0]);
+      setPreSalesData(lootBoxes);
+      setSelectedPreSale(lootBoxes.length > 0 ? lootBoxes[0] : {});
+    };
     setPaymentTypesData(paymentTypes);
-    setSelectedPreSale(preSales[0]);
-  }, []);
+
+    if (isConnected) _getlootBoxes();
+  }, [isConnected]);
 
   function handleSelectPayment(paymentType) {
     setSelectedPaymentType(paymentType);

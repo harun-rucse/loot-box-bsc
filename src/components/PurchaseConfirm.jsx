@@ -2,11 +2,13 @@ import { useState } from "react";
 import PurchaseSelectButton from "./PurchaseSelectButton";
 import { usePreSale } from "../context/PreSaleContext";
 import toast from "react-hot-toast";
+import useContracts from "../hooks/useContracts";
 
-function PurchaseConfirm() {
+function PurchaseConfirm({ payamount }) {
   const [showButton, setShowButton] = useState(false);
   const [check, setCheck] = useState(false);
   const [isConnected, _] = useState(true);
+  const { buyLotteryLootBox } = useContracts();
 
   const {
     preSalesData: items,
@@ -21,9 +23,13 @@ function PurchaseConfirm() {
     setShowButton(false);
   }
 
-  function handleConfirmBuy() {
-    toast.success("PreSale buy successful!");
-  }
+  const buyLootBox = async () => {
+    await buyLotteryLootBox(
+      0,
+      "0x0000000000000000000000000000000000000000",
+      payamount
+    );
+  };
 
   return (
     <div className="mx-6 my-2 p-4 border rounded-xl shadow max-h-[34rem] md:max-h-full overflow-y-auto">
@@ -142,7 +148,7 @@ function PurchaseConfirm() {
             <button
               className="flex justify-center gap-2 px-2.5 py-2 items-center w-full text-xl bg-[#acf0ff] border-[5px] border-[#d7f7ff] rounded-xl transition-all hover:bg-[#338afc] hover:border-[#338afc] hover:text-white disabled:cursor-not-allowed disabled:opacity-80"
               disabled={!check}
-              onClick={handleConfirmBuy}
+              onClick={buyLootBox}
             >
               Confirm Buy
             </button>

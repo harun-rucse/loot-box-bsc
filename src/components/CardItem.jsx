@@ -3,10 +3,37 @@ import PaymentType from "./PaymentType";
 import PurchaseConfirm from "./PurchaseConfirm";
 import { usePreSale } from "../context/PreSaleContext";
 import { cn } from "../utils";
+import { useEffect, useState } from "react";
+import useContracts from "../hooks/useContracts";
+import { useWeb3ModalAccount } from "@web3modal/ethers/react";
+import { formatUnits, parseUnits } from "ethers";
 
 function CardItem({ item, className }) {
-  const { showPurchase, handleSelectPreSale } = usePreSale();
   const { title, image, offer, totalUsdt, totalToken } = item;
+
+  const [payamount, setPayAmount] = useState(0);
+
+  const { showPurchase, handleSelectPreSale } = usePreSale();
+
+  const { getPayAmount, buyLotteryLootBox } = useContracts();
+  const { address, isConnected } = useWeb3ModalAccount();
+
+  useEffect(() => {
+    const _getPayAmount = async () => {
+      const _token_amount = formatUnits(item[1].toString(), "ether");
+      console.log(_token_amount);
+      const _payAmount = await getPayAmount(
+        "0x0000000000000000000000000000000000000000",
+        parseUnits(
+          (_token_amount - (_token_amount * Number(item[2])) / 100).toString(),
+          "ether"
+        )
+      );
+      console.log(formatUnits(_payAmount, "ether"));
+      setPayAmount(formatUnits(_payAmount, "ether"));
+    };
+    if (isConnected) _getPayAmount();
+  }, [isConnected]);
 
   return (
     <div
@@ -17,10 +44,10 @@ function CardItem({ item, className }) {
     >
       <div className="p-4 bg-white border shadow rounded-3xl">
         <p className="w-full mb-2 text-xl font-bold text-center uppercase">
-          {title}
+          {item[0]}
         </p>
         <p className="mb-6 text-xl font-medium text-center uppercase">
-          {offer}% Off
+          {Number(item[2])}% Off
         </p>
         <div className="relative h-56 border rounded-2xl">
           <img
@@ -37,9 +64,9 @@ function CardItem({ item, className }) {
         <div className="flex justify-center">
           <div className="inline-flex flex-col items-center justify-center px-4 py-1 text-center -translate-y-1/2 bg-white border rounded-full">
             <span className="font-semibold text-2xl/none">
-              {totalUsdt} <span className="text-sm">USDT</span>
+              {payamount} <span className="text-sm">USDT</span>
             </span>
-            <span>{totalToken} Token</span>
+            <span>{formatUnits(item[1].toString(), "ether")} Token</span>
           </div>
         </div>
 
@@ -58,7 +85,11 @@ function CardItem({ item, className }) {
             </div>
 
             <div className="mb-4">
-              {showPurchase ? <PurchaseConfirm /> : <PaymentType />}
+              {showPurchase ? (
+                <PurchaseConfirm payamount={payamount} />
+              ) : (
+                <PaymentType />
+              )}
             </div>
           </Modal.Body>
         </Modal>
