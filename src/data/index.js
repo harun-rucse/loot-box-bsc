@@ -1,0 +1,58 @@
+export const preSales = [
+  {
+    title: "Super Saver",
+    image: "/images/lootbox_0.png",
+    newPrice: 0.048,
+    oldPrice: 0.06,
+    offer: 10,
+    totalUsdt: 90,
+    totalToken: "2K",
+    totalFreeCoin: "20K",
+  },
+  {
+    title: "Stake on Stakcks",
+    image: "/images/lootbox_1.png",
+    newPrice: 0.048,
+    oldPrice: 0.06,
+    offer: 15,
+    totalUsdt: 170,
+    totalToken: "4K",
+    totalFreeCoin: "60K",
+  },
+  {
+    title: "Vault Overflow",
+    image: "/images/lootbox_2.png",
+    newPrice: 0.048,
+    oldPrice: 0.06,
+    offer: 20,
+    totalUsdt: 240,
+    totalToken: "6K",
+    totalFreeCoin: "120K",
+  },
+  {
+    title: "Streasure Chest",
+    image: "/images/lootbox_3.png",
+    newPrice: 0.048,
+    oldPrice: 0.06,
+    offer: 35,
+    totalUsdt: 260,
+    totalToken: "8K",
+    totalFreeCoin: "280K",
+  },
+  {
+    title: "Legendary",
+    image: "/images/lootbox_4.png",
+    newPrice: 0.048,
+    oldPrice: 0.06,
+    offer: 50,
+    totalUsdt: 250,
+    totalToken: "10K",
+    totalFreeCoin: "500K",
+  },
+];
+
+export const paymentTypes = [
+  { name: "tBNB", image: "/images/eth.png" },
+  { name: "USDT", image: "/images/usdt.png" },
+  { name: "USDC", image: "/images/usdc.png" },
+];
