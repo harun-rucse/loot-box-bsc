@@ -1,6 +1,11 @@
 import toast from "react-hot-toast";
+import { useWeb3Modal } from "@web3modal/ethers/react";
+import { useWeb3ModalAccount } from "@web3modal/ethers/react";
 
 function Header() {
+  const { open } = useWeb3Modal();
+  const { address, chainId, isConnected } = useWeb3ModalAccount();
+
   function handleConnect() {
     console.log("Connect");
     toast.success("Connected");
@@ -34,9 +39,11 @@ function Header() {
       </div>
       <button
         className="w-full py-3 text-lg font-bold transition-all bg-white shadow lg:w-56 rounded-2xl hover:bg-[#338afc] hover:text-white"
-        onClick={handleConnect}
+        onClick={isConnected ? () => open("Account") : () => open("Connect")}
       >
-        Connect Wallet
+        {isConnected
+          ? address.slice(0, 6) + "***" + address.slice(-4)
+          : "Connect Wallet"}
       </button>
     </header>
   );
