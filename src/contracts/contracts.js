@@ -2,6 +2,8 @@ export const LOOTBOX_CONTRACT_ADDRESS =
   "0xC549D88A3707977a375c43f2c39b99EfCD7367DA";
 export const USDT_CONTRACT_ADDRESS =
   "0x95D59d33E017533b996eAf351cf7428fE7510bc0";
+export const USDC_CONTRACT_ADDRESS =
+  "0x95D59d33E017533b996eAf351cf7428fE7510bc0";
 export const LOOTBOX_CONTRACT_ABI = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
   {

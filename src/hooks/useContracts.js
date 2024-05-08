@@ -9,6 +9,7 @@ import {
   LOOTBOX_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
   USDT_CONTRACT_ABI,
+  USDC_CONTRACT_ADDRESS,
 } from "../contracts/contracts";
 
 function useContracts() {
@@ -89,20 +90,15 @@ function useContracts() {
 
     if (token === "0x0000000000000000000000000000000000000000") {
       try {
-        console.log("buying with eth");
-        console.log("index", index);
-        console.log("token", token);
-        console.log("amount", amount);
         const tx = await contract.buyLootBox(index, token, {
           value: parseUnits(amount.toString(), "ether"),
         });
         await tx.wait();
         toast.success("Purchase successful");
       } catch (error) {
-        console.log(error);
         toast.error("Purchase failed");
       }
-    } else {
+    } else if (token === USDT_CONTRACT_ADDRESS) {
       // buy with usdt
 
       // 4. Get USDT contract
@@ -116,7 +112,35 @@ function useContracts() {
       try {
         const approveTx = await usdtContract.approve(
           LOOTBOX_CONTRACT_ADDRESS,
-          amount
+          parseUnits(amount.toString(), "ether")
+        );
+        await approveTx.wait();
+
+        const tx = await contract.buyLootBox(index, token, {
+          value: 0,
+        });
+        await tx.wait();
+
+        toast.success("Purchase successful");
+      } catch (error) {
+        console.log(error);
+        toast.error("Approve failed");
+        return;
+      }
+    } else {
+      // buy with usdc
+      // 4. Get USDC contract
+      const usdcContract = await getContract(
+        USDC_CONTRACT_ADDRESS,
+        USDT_CONTRACT_ABI,
+        signer
+      );
+
+      // approve payamount to contract && buy lootbox
+      try {
+        const approveTx = await usdcContract.approve(
+          LOOTBOX_CONTRACT_ADDRESS,
+          parseUnits(amount.toString(), "ether")
         );
         await approveTx.wait();
 

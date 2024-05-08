@@ -1,15 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PurchaseSelectButton from "./PurchaseSelectButton";
 import { usePreSale } from "../context/PreSaleContext";
 import toast from "react-hot-toast";
 import useContracts from "../hooks/useContracts";
+import ClipLoader from "react-spinners/ClipLoader";
+import {
+  USDT_CONTRACT_ADDRESS,
+  USDC_CONTRACT_ADDRESS,
+} from "../contracts/contracts";
+import { formatUnits, parseUnits } from "ethers";
 
-function PurchaseConfirm({ payamount }) {
+const override = {
+  display: "block",
+  margin: "0 auto",
+  borderColor: "red",
+};
+
+function PurchaseConfirm() {
   const [showButton, setShowButton] = useState(false);
   const [check, setCheck] = useState(false);
   const [isConnected, _] = useState(true);
-  const { buyLotteryLootBox } = useContracts();
 
+  let [loading, setLoading] = useState(false);
+  let [color, setColor] = useState("#ffffff");
+  const [payamount, setPayAmount] = useState(0);
+  const [usdtPayAmount, setUsdtPayAmount] = useState(0);
+
+  const { buyLotteryLootBox, getPayAmount } = useContracts();
   const {
     preSalesData: items,
     handleSelectPreSale,
@@ -17,6 +34,40 @@ function PurchaseConfirm({ payamount }) {
     selectedPaymentType,
     setShowPurchase,
   } = usePreSale();
+  console.log(items);
+
+  useEffect(() => {
+    const _getPayAmount = async () => {
+      const _token_amount = formatUnits(selectedPreSale[1].toString(), "ether");
+
+      const _payAmount = await getPayAmount(
+        "0x0000000000000000000000000000000000000000",
+        parseUnits(
+          (
+            _token_amount -
+            (_token_amount * Number(selectedPreSale[2])) / 100
+          ).toString(),
+          "ether"
+        )
+      );
+
+      setPayAmount(formatUnits(_payAmount, "ether"));
+
+      const _usdtPayAmount = await getPayAmount(
+        USDT_CONTRACT_ADDRESS,
+        parseUnits(
+          (
+            _token_amount -
+            (_token_amount * Number(selectedPreSale[2])) / 100
+          ).toString(),
+          "ether"
+        )
+      );
+
+      setUsdtPayAmount(formatUnits(_usdtPayAmount, "ether"));
+    };
+    if (isConnected) _getPayAmount();
+  }, [isConnected]);
 
   function handleSelect(item) {
     handleSelectPreSale(item);
@@ -24,11 +75,20 @@ function PurchaseConfirm({ payamount }) {
   }
 
   const buyLootBox = async () => {
-    await buyLotteryLootBox(
-      0,
-      "0x0000000000000000000000000000000000000000",
-      payamount
-    );
+    setLoading(true);
+    if (selectedPaymentType.name === "tBNB") {
+      await buyLotteryLootBox(
+        0,
+        "0x0000000000000000000000000000000000000000",
+        payamount
+      );
+    } else if (selectedPaymentType.name === "USDT") {
+      await buyLotteryLootBox(0, USDT_CONTRACT_ADDRESS, payamount);
+    } else {
+      await buyLotteryLootBox(0, USDC_CONTRACT_ADDRESS, payamount);
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -68,18 +128,32 @@ function PurchaseConfirm({ payamount }) {
               <div className="flex items-center gap-2">
                 <img
                   src={selectedPreSale.image}
-                  alt={selectedPreSale.name}
+                  alt={selectedPreSale[0]}
                   className="object-contain w-8 h-8"
                 />
                 <div className="flex flex-col">
                   <span className="font-bold text-xl/none">
-                    {selectedPreSale.title}
+                    {selectedPreSale[0]}
                   </span>
                   <span className="text-xs font-semibold">
-                    {`${selectedPreSale.newPrice} ${selectedPaymentType.name}`}{" "}
+                    {`${
+                      selectedPaymentType.name === "tBNB"
+                        ? payamount
+                        : usdtPayAmount
+                    } ${selectedPaymentType.name}`}{" "}
                     |{" "}
-                    <span className="line-through">{`${selectedPreSale.oldPrice} ${selectedPaymentType.name}`}</span>{" "}
-                    ({selectedPreSale.offer}% OFF)
+                    <span className="line-through">{`${(
+                      Number(
+                        selectedPaymentType.name === "tBNB"
+                          ? payamount
+                          : usdtPayAmount
+                      ) +
+                      (selectedPaymentType.name === "tBNB"
+                        ? payamount
+                        : Number(usdtPayAmount) * Number(selectedPreSale[2])) /
+                        100
+                    ).toFixed(2)} ${selectedPaymentType.name}`}</span>{" "}
+                    ({Number(selectedPreSale[2])}% OFF)
                   </span>
                 </div>
               </div>
@@ -110,7 +184,11 @@ function PurchaseConfirm({ payamount }) {
                 name="toValue"
                 readOnly
                 className="px-5 py-2.5 w-full h-auto text-lg border rounded-2xl"
-                value={`${selectedPreSale.totalToken} (${selectedPreSale.totalFreeCoin} free coins)`}
+                value={`${formatUnits(selectedPreSale[1], "ether")} (${
+                  (formatUnits(selectedPreSale[1], "ether") *
+                    Number(selectedPreSale[2])) /
+                  100
+                } free coins)`}
               />
             </div>
             <div className="col-span-8 md:col-span-4 md:justify-center flex gap-1 px-4 py-2.5 border font-medium text-xl rounded-2xl items-center">
@@ -145,13 +223,27 @@ function PurchaseConfirm({ payamount }) {
 
         <div className="mt-6">
           {isConnected ? (
-            <button
-              className="flex justify-center gap-2 px-2.5 py-2 items-center w-full text-xl bg-[#acf0ff] border-[5px] border-[#d7f7ff] rounded-xl transition-all hover:bg-[#338afc] hover:border-[#338afc] hover:text-white disabled:cursor-not-allowed disabled:opacity-80"
-              disabled={!check}
-              onClick={buyLootBox}
-            >
-              Confirm Buy
-            </button>
+            loading ? (
+              <>
+                <p className="text-center">Purchasing...</p>
+                <ClipLoader
+                  color={color}
+                  loading={loading}
+                  cssOverride={override}
+                  size={30}
+                  aria-label="Loading Spinner"
+                  data-testid="loader"
+                />
+              </>
+            ) : (
+              <button
+                className="flex justify-center gap-2 px-2.5 py-2 items-center w-full text-xl bg-[#acf0ff] border-[5px] border-[#d7f7ff] rounded-xl transition-all hover:bg-[#338afc] hover:border-[#338afc] hover:text-white disabled:cursor-not-allowed disabled:opacity-80"
+                disabled={!check}
+                onClick={buyLootBox}
+              >
+                Confirm Buy
+              </button>
+            )
           ) : (
             <button
               className="flex justify-center gap-2 px-2.5 py-2 items-center w-full text-xl bg-[#acf0ff] border-[5px] border-[#d7f7ff] rounded-xl transition-all hover:bg-[#338afc] hover:border-[#338afc] hover:text-white disabled:cursor-not-allowed disabled:opacity-80"

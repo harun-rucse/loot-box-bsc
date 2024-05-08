@@ -7,21 +7,23 @@ import { useEffect, useState } from "react";
 import useContracts from "../hooks/useContracts";
 import { useWeb3ModalAccount } from "@web3modal/ethers/react";
 import { formatUnits, parseUnits } from "ethers";
+import { USDT_CONTRACT_ADDRESS } from "../contracts/contracts";
 
 function CardItem({ item, className }) {
   const { title, image, offer, totalUsdt, totalToken } = item;
 
   const [payamount, setPayAmount] = useState(0);
+  const [usdtPayAmount, setUsdtPayAmount] = useState(0);
 
-  const { showPurchase, handleSelectPreSale } = usePreSale();
-
+  const { showPurchase, handleSelectPreSale, selectedPaymentType } =
+    usePreSale();
   const { getPayAmount, buyLotteryLootBox } = useContracts();
   const { address, isConnected } = useWeb3ModalAccount();
 
   useEffect(() => {
     const _getPayAmount = async () => {
       const _token_amount = formatUnits(item[1].toString(), "ether");
-      console.log(_token_amount);
+
       const _payAmount = await getPayAmount(
         "0x0000000000000000000000000000000000000000",
         parseUnits(
@@ -29,8 +31,18 @@ function CardItem({ item, className }) {
           "ether"
         )
       );
-      console.log(formatUnits(_payAmount, "ether"));
+
       setPayAmount(formatUnits(_payAmount, "ether"));
+
+      const _usdtPayAmount = await getPayAmount(
+        USDT_CONTRACT_ADDRESS,
+        parseUnits(
+          (_token_amount - (_token_amount * Number(item[2])) / 100).toString(),
+          "ether"
+        )
+      );
+
+      setUsdtPayAmount(formatUnits(_usdtPayAmount, "ether"));
     };
     if (isConnected) _getPayAmount();
   }, [isConnected]);
@@ -64,7 +76,7 @@ function CardItem({ item, className }) {
         <div className="flex justify-center">
           <div className="inline-flex flex-col items-center justify-center px-4 py-1 text-center -translate-y-1/2 bg-white border rounded-full">
             <span className="font-semibold text-2xl/none">
-              {payamount} <span className="text-sm">USDT</span>
+              {usdtPayAmount} <span className="text-sm">USDT</span>
             </span>
             <span>{formatUnits(item[1].toString(), "ether")} Token</span>
           </div>
@@ -86,7 +98,13 @@ function CardItem({ item, className }) {
 
             <div className="mb-4">
               {showPurchase ? (
-                <PurchaseConfirm payamount={payamount} />
+                <PurchaseConfirm
+                  payamount={
+                    selectedPaymentType.name === "tBNB"
+                      ? payamount
+                      : usdtPayAmount
+                  }
+                />
               ) : (
                 <PaymentType />
               )}
